@@ -1,15 +1,19 @@
 {
   "name": "nisko-order-server",
-  "version": "1.0.0",
-  "description": "Order analysis server for Nisko",
+  "version": "2.0.0",
+  "description": "Order analysis server for Nisko using Claude AI",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "@anthropic-ai/sdk": "^0.20.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "engines": {
     "node": ">=16.0.0"
