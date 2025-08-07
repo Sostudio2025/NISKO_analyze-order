@@ -859,7 +859,7 @@ Attached files analysis:`
     console.log('Calling Claude API...');
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 10000,
+      max_tokens: 8192,
       temperature: 1,
       messages: messages
     });
