@@ -967,7 +967,7 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Nisko Order Analysis Server v2.0 running on port ${PORT}`);
   console.log('Features: Multi-file support, flexible attachment handling');
