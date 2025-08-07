@@ -723,7 +723,7 @@ Since groove profiles consist of two segments, the power connection position mus
 - Corner connections take priority over segment-specific positioning`;
 
 
-// פונקציה ליצירת HTML מהנתונים שחולצו
+// פונקציה ליצירת HTML מהנתונים שחולצו - לפי הדוגמה המדויקת
 function generateOrderHTML(orderData) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
     return '<p>לא נמצאו הזמנות</p>';
@@ -732,29 +732,28 @@ function generateOrderHTML(orderData) {
   let html = '';
   
   orderData.orders.forEach((order, orderIndex) => {
-    html += `<div class="order-container">`;
-    
     // כותרת עיקרית
-    html += `<div class="order-header">
-      <h2>🏠 ניסקו חמת תדהר - לגבית רווי עבודה 🏠</h2>
-    </div>`;
+    html += `<h2><strong>סיכום הזמנה חדשה - להכנת דף עבודה</strong></h2>\n\n`;
     
-    // פרטי הזמנה (רק אם קיימים)
-    if (order.order_date || order.order_number) {
-      html += `<div class="order-info">`;
-      if (order.order_date && order.order_date !== 'UNSURE') {
-        html += `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>`;
-      }
-      if (order.order_number && order.order_number !== 'UNSURE') {
-        html += `<p><strong>מס הזמנה (לידיעת לקוחות):</strong> ${order.order_number}</p>`;
-      }
-      html += `</div>`;
+    // פרטי הזמנה עיקריים
+    if (order.order_date && order.order_date !== 'UNSURE') {
+      html += `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
-    // מספר כרטיס רווחית - תמיד ריק
-    html += `<div class="card-number">
-      <p><strong>מס כרטיס רווחית:</strong> <input type="text" placeholder="מספר (ריק)" style="border: none; background: transparent; width: 100px;" readonly></p>
-    </div>`;
+    // שם לקוח עם כרטיס רווחית ריק
+    if (order.client_name && order.client_name !== 'UNSURE') {
+      html += `<p><strong>שם לקוח:</strong> ${order.client_name} - _______ (מס כרטיס רווחית)</p>\n`;
+    }
+    
+    if (order.order_number && order.order_number !== 'UNSURE') {
+      html += `<p><strong>מס׳ הזמנה (רכש):</strong> ${order.order_number}</p>\n`;
+    }
+    
+    if (order.branch && order.branch !== 'UNSURE') {
+      html += `<p><strong>סניף:</strong> ${order.branch}</p>\n`;
+    }
+    
+    html += `\n`;
 
     // פרופילים
     if (order.profiles && order.profiles.length > 0) {
@@ -763,198 +762,204 @@ function generateOrderHTML(orderData) {
       order.profiles.forEach(profile => {
         // דלג על פרופילים שנדלגו או אביזרים
         if (profile.skipped_reason || 
-            profile.name.includes('תוספת תליה') || 
-            profile.name.includes('תוספת דימור')) {
+            (profile.name && (profile.name.includes('תוספת תליה') || profile.name.includes('תוספת דימור')))) {
           return;
         }
         
-        html += `<div class="profile-section">
-          <h3>🔄 פרופיל ${profileCounter}:</h3>
-        `;
+        html += `<p><strong>פרופיל ${profileCounter}:</strong></p>\n`;
         
         // שם פרופיל
         if (profile.name && profile.name !== 'UNSURE') {
-          html += `<p><strong>${profile.name}</strong></p>`;
+          html += `<p><strong>שם פרופיל:</strong> ${profile.name}</p>\n`;
         }
         
         // מק"ט
         if (profile.catalog_number && profile.catalog_number !== 'UNSURE') {
-          html += `<p>מק"ט: ${profile.catalog_number}</p>`;
+          html += `<p><strong>מקט:</strong> ${profile.catalog_number}</p>\n`;
+        }
+        
+        // גוון לד
+        if (profile.led_color && profile.led_color !== 'UNSURE') {
+          html += `<p><strong>גוון לד:</strong> ${profile.led_color}</p>\n`;
+        }
+        
+        // סוג לד
+        if (profile.led_type && profile.led_type !== 'UNSURE') {
+          html += `<p><strong>סוג לד:</strong> ${profile.led_type}</p>\n`;
         }
         
         // אורך
         if (profile.length && profile.length !== 'UNSURE') {
-          html += `<p>אור PCB: ${profile.length}</p>`;
+          html += `<p><strong>אורך:</strong> ${profile.length}</p>\n`;
         }
         
         // כמות
         if (profile.quantity && profile.quantity !== 'UNSURE') {
-          html += `<p>כמות: ${profile.quantity}</p>`;
+          html += `<p><strong>כמות:</strong> ${profile.quantity}</p>\n`;
         }
         
         // מחיר
         if (profile.price && profile.price !== 'UNSURE' && profile.price !== '0.00') {
-          html += `<p>מחיר: ${profile.price} ש"ח</p>`;
+          html += `<p><strong>מחיר:</strong> ${profile.price}₪</p>\n`;
         }
         
         // צבע פרופיל
         if (profile.color && profile.color !== 'UNSURE') {
-          html += `<p>צבע פרופיל: ${profile.color}</p>`;
+          html += `<p><strong>צבע פרופיל:</strong> ${profile.color}</p>\n`;
         }
         
-        // צבע LED
-        if (profile.led_color && profile.led_color !== 'UNSURE') {
-          html += `<p>צבע PCB: ${profile.led_color}</p>`;
+        // גרונג
+        if (profile.groove_direction && profile.groove_direction !== 'UNSURE') {
+          html += `<p><strong>גרונג:</strong> ${profile.groove_direction}</p>\n`;
+        } else {
+          html += `<p><strong>גרונג:</strong> לא גרונג</p>\n`;
         }
         
-        // הזנת חשמל
+        // תלייה
+        if (profile.hung && profile.hung !== 'UNSURE') {
+          html += `<p><strong>תלייה:</strong> ${profile.hung}</p>\n`;
+        }
+        
+        // נקודת הזנה
         if (profile.power_connection_position && profile.power_connection_position !== 'UNSURE') {
-          html += `<p>הזנת החשמל - מתי חיבור: ${profile.power_connection_position}</p>`;
+          html += `<p><strong>נקודת הזנה:</strong> ${profile.power_connection_position}</p>\n`;
         }
         
-        // הערות מיוחדות של המסחר אותם פרופים עירחים
+        // הערות נוספות
         if (profile.notes && profile.notes !== null) {
-          html += `<p>הערות: ${profile.notes}</p>`;
+          html += `<p><strong>הערות נוספות ע״ג ההזמנה:</strong> ${profile.notes}</p>\n`;
         }
         
-        html += `</div>`;
+        // שדות חסרים
+        if (profile.missing_fields && profile.missing_fields.length > 0) {
+          html += `<p><strong>שדות חסרים:</strong> ${profile.missing_fields.join(', ')}</p>\n`;
+        }
+        
+        html += `\n`;
         profileCounter++;
       });
     }
     
     // תוספות (אביזרים)
-    const accessories = order.profiles.filter(p => 
+    const accessories = order.profiles ? order.profiles.filter(p => 
       p.name && (p.name.includes('תוספת תליה') || p.name.includes('תוספת דימור'))
-    );
+    ) : [];
     
     if (accessories.length > 0) {
-      html += `<div class="accessories-section">
-        <h3>➕ תוספות בהזמנה</h3>
-      `;
+      html += `<p><strong>תוספות בהזמנה</strong></p>\n`;
       
       accessories.forEach(accessory => {
-        html += `<p><strong>שם מוצר:</strong> ${accessory.name}</p>`;
+        let accessoryLine = '';
+        
+        if (accessory.name && accessory.name !== 'UNSURE') {
+          accessoryLine += `<strong>שם מוצר:</strong> ${accessory.name} `;
+        }
+        
         if (accessory.catalog_number && accessory.catalog_number !== 'UNSURE') {
-          html += `<p>מק"ט: ${accessory.catalog_number}</p>`;
+          accessoryLine += `<strong>מקט:</strong> ${accessory.catalog_number} `;
         }
+        
         if (accessory.quantity && accessory.quantity !== 'UNSURE') {
-          html += `<p>כמות: ${accessory.quantity}</p>`;
+          accessoryLine += `<strong>כמות:</strong> ${accessory.quantity} `;
         }
+        
         if (accessory.price && accessory.price !== 'UNSURE' && accessory.price !== '0.00') {
-          html += `<p>מחיר: ${accessory.price} ש"ח</p>`;
+          accessoryLine += `<strong>מחיר:</strong> ${accessory.price}₪`;
+        }
+        
+        if (accessoryLine) {
+          html += `<p>${accessoryLine}</p>\n`;
         }
       });
       
-      html += `</div>`;
+      html += `\n`;
     }
     
-    // פרופילים לא PCB - רק הערה
-    const nonPcbProfiles = order.profiles.filter(p => p.skipped_reason === 'not_pcb_profile');
+    // פרופילים לא PCB
+    const nonPcbProfiles = order.profiles ? order.profiles.filter(p => p.skipped_reason === 'not_pcb_profile') : [];
     if (nonPcbProfiles.length > 0) {
-      html += `<div class="non-pcb-section">
-        <h3>🔧 פרופילים שאינם מהזמנה - לא PCB</h3>
-        <p><strong>שם מוצר:</strong> לידיעה בלבד</p>
-        <p><strong>מחלקה:</strong> PCB לא בהזמנה ידועת</p>
-      `;
+      html += `<p><strong>פרופילים נוספים בהזמנה - ללא PCB</strong></p>\n`;
       
       nonPcbProfiles.forEach(profile => {
         if (profile.name && profile.name !== 'UNSURE') {
-          html += `<p>• ${profile.name}</p>`;
+          html += `<p><strong>שם:</strong> ${profile.name} <strong>הערה:</strong> לא PCB - יש לבדוק ידנית</p>\n`;
         }
       });
       
-      html += `</div>`;
+      html += `\n`;
     }
     
-    // הערות מיצואות של האגטניע על ההזמנה
-    html += `<div class="ai-notes">
-      <h3>🧠 הערות מיצואות של האגט על ההזמנה</h3>
-      <ul>`;
+    // הערות של האייג'נט
+    html += `<p><strong>הערות נוספות של האייג'נט על ההזמנה</strong></p>\n`;
     
-    // הערות לגבי שדות חסרים
+    // בנה רשימת הערות חכמות
+    const aiNotes = [];
+    
+    // בדוק גרונג
+    const grooveProfiles = order.profiles ? order.profiles.filter(p => 
+      p.groove_direction && p.groove_direction !== 'UNSURE' && p.groove_direction !== 'לא גרונג'
+    ) : [];
+    
+    if (grooveProfiles.length > 0) {
+      aiNotes.push('לפי הסקיצה זיהיתי שאחד מהפרופילים הוא בתצורת גרונג');
+      aiNotes.push('יש לוודא סקיצה לפני הכנת דף עבודה');
+    }
+    
+    // בדוק פרופילים לא PCB
+    if (nonPcbProfiles.length > 0) {
+      aiNotes.push('ישנם פרופילים לא מסוג PCB בהזמנה - יש לוודא ידנית');
+    }
+    
+    // בדוק שדות חסרים כלליים
     const allMissingFields = new Set();
-    order.profiles.forEach(profile => {
-      if (profile.missing_fields) {
-        profile.missing_fields.forEach(field => allMissingFields.add(field));
-      }
-    });
-    
-    if (allMissingFields.size > 0) {
-      html += `<li>שדות חסרים שזוהו: ${Array.from(allMissingFields).join(', ')}</li>`;
-    }
-    
-    // הערות לגבי איכות הנתונים
-    const uncertainFields = [];
-    order.profiles.forEach(profile => {
-      Object.entries(profile).forEach(([key, value]) => {
-        if (value === 'UNSURE') {
-          uncertainFields.push(`${key} בפרופיל ${profile.name || 'לא מזוהה'}`);
+    if (order.profiles) {
+      order.profiles.forEach(profile => {
+        if (profile.missing_fields) {
+          profile.missing_fields.forEach(field => allMissingFields.add(field));
         }
       });
+    }
+    
+    if (allMissingFields.size > 0) {
+      aiNotes.push(`זוהו שדות חסרים: ${Array.from(allMissingFields).join(', ')}`);
+    }
+    
+    // בדוק משלוח
+    if (order.delivery && order.delivery.is_required === true) {
+      aiNotes.push('זוהתה דרישת משלוח ללקוח');
+      if (order.delivery.address) {
+        aiNotes.push(`כתובת משלוח: ${order.delivery.address}`);
+      }
+    }
+    
+    // הערות ברירת מחדל
+    if (aiNotes.length === 0) {
+      aiNotes.push('כל המידע חולץ אוטומטית מהמסמכים המצורפים');
+      aiNotes.push('נא לאמת נכונות הפרטים לפני ביצוע ההזמנה');
+    }
+    
+    // הדפס הערות
+    aiNotes.forEach(note => {
+      html += `<p>* ${note}</p>\n`;
     });
     
-    if (uncertainFields.length > 0) {
-      html += `<li>שדות לא ברורים שדרשו אישור: ${uncertainFields.join(', ')}</li>`;
-    }
-    
-    // הערות כלליות
-    html += `<li>כל המידע חולץ אוטומטית מהמסמכים המצורפים</li>`;
-    html += `<li>נא לאמת נכונות הפרטים לפני ביצוע ההזמנה</li>`;
-    
-    if (order.delivery && order.delivery.is_required) {
-      html += `<li>זוהתה דרישת משלוח ללקוח</li>`;
-    }
-    
-    html += `</ul>
-    </div>`;
-    
-    html += `</div>`; // סגירת order-container
   });
 
   return html;
 }
 
-// עדכון ה-endpoint הקיים - החלף את החזרת התשובה הנוכחית בזה:
-/*
-  // מקום בקוד הקיים - לפני res.json החזר את זה:
-  const htmlOutput = generateOrderHTML(orderData);
-  
-  // החזר גם JSON וגם HTML
-  res.json({
-    success: true,
-    data: orderData,
-    html_output: htmlOutput,
-    metadata: {
-      processed_at: new Date().toISOString(),
-      model_used: 'claude-3-5-sonnet-20241022',
-      attachments_processed: {
-        total: attachments ? attachments.length : 0,
-        pdfs: pdfCount,
-        images: imageCount,
-        others: otherCount
-      }
-    }
-  });
-*/
-
-// הוסף CSS styles (אופציונלי - לעיצוב יפה יותר)
-const orderCSS = `
+// פונקציה עם CSS פשוט
+function generateFullOrderHTML(orderData) {
+  const css = `
 <style>
-.order-container { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-.order-header { background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-.order-header h2 { margin: 0; color: #333; }
-.profile-section { border-left: 4px solid #4CAF50; padding: 10px; margin: 15px 0; background: #f9f9f9; }
-.accessories-section { border-left: 4px solid #FF9800; padding: 10px; margin: 15px 0; background: #fff8f0; }
-.non-pcb-section { border-left: 4px solid #9E9E9E; padding: 10px; margin: 15px 0; background: #f5f5f5; }
-.ai-notes { border-left: 4px solid #2196F3; padding: 10px; margin: 15px 0; background: #f0f8ff; }
-.order-info { margin-bottom: 15px; }
-.card-number { margin: 10px 0; padding: 10px; background: #fffeee; border: 1px dashed #ddd; }
+body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+h2 { color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+p { margin: 5px 0; }
+strong { color: #333; }
 </style>
 `;
-
-// פונקציה שתחזיר HTML מלא עם CSS
-function generateFullOrderHTML(orderData) {
-  return orderCSS + generateOrderHTML(orderData);
+  
+  return css + generateOrderHTML(orderData);
 }
 
 // Helper function to determine file type
