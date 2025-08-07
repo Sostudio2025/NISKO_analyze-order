@@ -722,7 +722,6 @@ Since groove profiles consist of two segments, the power connection position mus
 - For groove profiles, segment identification is mandatory when specific positioning is given
 - Corner connections take priority over segment-specific positioning`;
 
-
 // פונקציה ליצירת HTML מהנתונים שחולצו - לפי הדוגמה המדויקת
 function generateOrderHTML(orderData) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
@@ -946,172 +945,6 @@ function generateOrderHTML(orderData) {
   });
 
   return html;
-}
-
-// פונקציה עם CSS מעוצב כמו בתמונה
-function generateFullOrderHTML(orderData) {
-  const css = `
-<style>
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-    line-height: 1.5; 
-    margin: 20px auto; 
-    max-width: 800px; 
-    background-color: #f8f9fa;
-    color: #333;
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .container {
-    background: white;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-    margin: 20px 0;
-  }
-  
-  h2 { 
-    color: #2c3e50; 
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  }
-  
-  .order-info {
-    background: #f8f9ff;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border-right: 4px solid #3498db;
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .profile-section {
-    background: #f0fff4;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-    border-right: 4px solid #27ae60;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .profile-title {
-    color: #27ae60;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .accessories-section {
-    background: #fff8f0;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-    border-right: 4px solid #f39c12;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .non-pcb-section {
-    background: #f5f5f5;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-    border-right: 4px solid #95a5a6;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .ai-notes-section {
-    background: #f0f8ff;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-    border-right: 4px solid #3498db;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .section-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    color: #2c3e50;
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .accessories-title { color: #f39c12; }
-  .non-pcb-title { color: #95a5a6; }
-  .ai-notes-title { color: #3498db; }
-  
-  p { 
-    margin: 8px 0; 
-    font-size: 14px;
-  }
-  
-  strong { 
-    color: #2c3e50; 
-    font-weight: 600;
-  }
-  
-  .profile-field {
-    margin: 6px 0;
-    padding: 4px 0;
-  }
-  
-  .highlight-value {
-    color: #e74c3c;
-    font-weight: bold;
-  }
-  
-  .currency {
-    color: #27ae60;
-    font-weight: bold;
-  }
-  
-  .missing-fields {
-    color: #e74c3c;
-    font-style: italic;
-  }
-  
-  .ai-note {
-    margin: 8px 0;
-    padding-right: 15px;
-    position: relative;
-    direction: rtl;
-    text-align: right;
-  }
-  
-  .ai-note::before {
-    content: "•";
-    color: #3498db;
-    font-weight: bold;
-    position: absolute;
-    right: 0;
-  }
-</style>
-`;
-  
-  return css + '<div class="container">' + generateStyledOrderHTML(orderData) + '</div>';
 }
 
 // פונקציה מעודכנת ליצירת HTML מעוצב
@@ -1347,18 +1180,170 @@ function generateStyledOrderHTML(orderData) {
   return html;
 }
 
-// פונקציה עם CSS פשוט
+// פונקציה עם CSS מעוצב כמו בתמונה - מעודכן עם RTL
 function generateFullOrderHTML(orderData) {
   const css = `
 <style>
-body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-h2 { color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
-p { margin: 5px 0; }
-strong { color: #333; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+    line-height: 1.5; 
+    margin: 20px auto; 
+    max-width: 800px; 
+    background-color: #f8f9fa;
+    color: #333;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .container {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    margin: 20px 0;
+  }
+  
+  h2 { 
+    color: #2c3e50; 
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .order-info {
+    background: #f8f9ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-right: 4px solid #3498db;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-section {
+    background: #f0fff4;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #27ae60;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-title {
+    color: #27ae60;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-section {
+    background: #fff8f0;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #f39c12;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .non-pcb-section {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #95a5a6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-notes-section {
+    background: #f0f8ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    color: #2c3e50;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-title { color: #f39c12; }
+  .non-pcb-title { color: #95a5a6; }
+  .ai-notes-title { color: #3498db; }
+  
+  p { 
+    margin: 8px 0; 
+    font-size: 14px;
+  }
+  
+  strong { 
+    color: #2c3e50; 
+    font-weight: 600;
+  }
+  
+  .profile-field {
+    margin: 6px 0;
+    padding: 4px 0;
+  }
+  
+  .highlight-value {
+    color: #e74c3c;
+    font-weight: bold;
+  }
+  
+  .currency {
+    color: #27ae60;
+    font-weight: bold;
+  }
+  
+  .missing-fields {
+    color: #e74c3c;
+    font-style: italic;
+  }
+  
+  .ai-note {
+    margin: 8px 0;
+    padding-right: 15px;
+    position: relative;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-note::before {
+    content: "•";
+    color: #3498db;
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+  }
 </style>
 `;
   
-  return css + generateOrderHTML(orderData);
+  return css + '<div class="container">' + generateStyledOrderHTML(orderData) + '</div>';
 }
 
 // Helper function to determine file type
@@ -1524,27 +1509,25 @@ Attached files analysis:`
       });
     }
 
-    // Return the analysis result
-// Generate HTML output
-const htmlOutput = generateOrderHTML(orderData);
+    // Generate HTML output
+    const htmlOutput = generateFullOrderHTML(orderData);
 
-// Return the analysis result with HTML
-res.json({
-  success: true,
-  data: orderData,
-  html_output: htmlOutput,
-  html_with_css: generateFullOrderHTML(orderData),
-  metadata: {
-    processed_at: new Date().toISOString(),
-    model_used: 'claude-3-5-sonnet-20241022',
-    attachments_processed: {
-      total: attachments ? attachments.length : 0,
-      pdfs: pdfCount,
-      images: imageCount,
-      others: otherCount
-    }
-  }
-});
+    // Return the analysis result with HTML
+    res.json({
+      success: true,
+      data: orderData,
+      html_output: htmlOutput,
+      metadata: {
+        processed_at: new Date().toISOString(),
+        model_used: 'claude-3-5-sonnet-20241022',
+        attachments_processed: {
+          total: attachments ? attachments.length : 0,
+          pdfs: pdfCount,
+          images: imageCount,
+          others: otherCount
+        }
+      }
+    });
 
   } catch (error) {
     console.error('Error processing order:', error);
