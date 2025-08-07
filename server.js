@@ -948,6 +948,405 @@ function generateOrderHTML(orderData) {
   return html;
 }
 
+// פונקציה עם CSS מעוצב כמו בתמונה
+function generateFullOrderHTML(orderData) {
+  const css = `
+<style>
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+    line-height: 1.5; 
+    margin: 20px auto; 
+    max-width: 800px; 
+    background-color: #f8f9fa;
+    color: #333;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .container {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    margin: 20px 0;
+  }
+  
+  h2 { 
+    color: #2c3e50; 
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .order-info {
+    background: #f8f9ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-right: 4px solid #3498db;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-section {
+    background: #f0fff4;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #27ae60;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-title {
+    color: #27ae60;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-section {
+    background: #fff8f0;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #f39c12;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .non-pcb-section {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #95a5a6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-notes-section {
+    background: #f0f8ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    color: #2c3e50;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-title { color: #f39c12; }
+  .non-pcb-title { color: #95a5a6; }
+  .ai-notes-title { color: #3498db; }
+  
+  p { 
+    margin: 8px 0; 
+    font-size: 14px;
+  }
+  
+  strong { 
+    color: #2c3e50; 
+    font-weight: 600;
+  }
+  
+  .profile-field {
+    margin: 6px 0;
+    padding: 4px 0;
+  }
+  
+  .highlight-value {
+    color: #e74c3c;
+    font-weight: bold;
+  }
+  
+  .currency {
+    color: #27ae60;
+    font-weight: bold;
+  }
+  
+  .missing-fields {
+    color: #e74c3c;
+    font-style: italic;
+  }
+  
+  .ai-note {
+    margin: 8px 0;
+    padding-right: 15px;
+    position: relative;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-note::before {
+    content: "•";
+    color: #3498db;
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+  }
+</style>
+`;
+  
+  return css + '<div class="container">' + generateStyledOrderHTML(orderData) + '</div>';
+}
+
+// פונקציה מעודכנת ליצירת HTML מעוצב
+function generateStyledOrderHTML(orderData) {
+  if (!orderData || !orderData.orders || orderData.orders.length === 0) {
+    return '<p>לא נמצאו הזמנות</p>';
+  }
+
+  let html = '';
+  
+  orderData.orders.forEach((order, orderIndex) => {
+    // כותרת עיקרית עם אייקון
+    html += `<h2>🏠 סיכום הזמנה חדשה - להכנת דף עבודה 🏠</h2>\n\n`;
+    
+    // פרטי הזמנה עיקריים
+    html += `<div class="order-info">\n`;
+    
+    if (order.order_date && order.order_date !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
+    }
+    
+    // שם לקוח עם כרטיס רווחית ריק
+    if (order.client_name && order.client_name !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${order.client_name} - <span class="highlight-value">_______</span> (מס כרטיס רווחית)</p>\n`;
+    }
+    
+    if (order.order_number && order.order_number !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>מס׳ הזמנה (רכש):</strong> ${order.order_number}</p>\n`;
+    }
+    
+    if (order.branch && order.branch !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>סניף:</strong> ${order.branch}</p>\n`;
+    }
+    
+    html += `</div>\n\n`;
+
+    // פרופילים
+    if (order.profiles && order.profiles.length > 0) {
+      let profileCounter = 1;
+      
+      order.profiles.forEach(profile => {
+        // דלג על פרופילים שנדלגו או אביזרים
+        if (profile.skipped_reason || 
+            (profile.name && (profile.name.includes('תוספת תליה') || profile.name.includes('תוספת דימור')))) {
+          return;
+        }
+        
+        html += `<div class="profile-section">\n`;
+        html += `<div class="profile-title">🔄 פרופיל ${profileCounter}:</div>\n`;
+        
+        // שם פרופיל
+        if (profile.name && profile.name !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>שם פרופיל:</strong> ${profile.name}</p>\n`;
+        }
+        
+        // מק"ט
+        if (profile.catalog_number && profile.catalog_number !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>מקט:</strong> ${profile.catalog_number}</p>\n`;
+        }
+        
+        // גוון לד
+        if (profile.led_color && profile.led_color !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>גוון לד:</strong> ${profile.led_color}</p>\n`;
+        }
+        
+        // סוג לד
+        if (profile.led_type && profile.led_type !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>סוג לד:</strong> ${profile.led_type}</p>\n`;
+        }
+        
+        // אורך
+        if (profile.length && profile.length !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>אורך:</strong> ${profile.length}</p>\n`;
+        }
+        
+        // כמות
+        if (profile.quantity && profile.quantity !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>כמות:</strong> ${profile.quantity}</p>\n`;
+        }
+        
+        // מחיר
+        if (profile.price && profile.price !== 'UNSURE' && profile.price !== '0.00') {
+          html += `<p class="profile-field"><strong>מחיר:</strong> <span class="currency">${profile.price}₪</span></p>\n`;
+        }
+        
+        // צבע פרופיל
+        if (profile.color && profile.color !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>צבע פרופיל:</strong> ${profile.color}</p>\n`;
+        }
+        
+        // גרונג
+        if (profile.groove_direction && profile.groove_direction !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>גרונג:</strong> <span class="highlight-value">${profile.groove_direction}</span></p>\n`;
+        } else {
+          html += `<p class="profile-field"><strong>גרונג:</strong> לא גרונג</p>\n`;
+        }
+        
+        // תלייה
+        if (profile.hung && profile.hung !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>תלייה:</strong> ${profile.hung}</p>\n`;
+        }
+        
+        // נקודת הזנה
+        if (profile.power_connection_position && profile.power_connection_position !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>נקודת הזנה:</strong> ${profile.power_connection_position}</p>\n`;
+        }
+        
+        // הערות נוספות
+        if (profile.notes && profile.notes !== null) {
+          html += `<p class="profile-field"><strong>הערות נוספות ע״ג ההזמנה:</strong> ${profile.notes}</p>\n`;
+        }
+        
+        // שדות חסרים
+        if (profile.missing_fields && profile.missing_fields.length > 0) {
+          html += `<p class="profile-field missing-fields"><strong>שדות חסרים:</strong> ${profile.missing_fields.join(', ')}</p>\n`;
+        }
+        
+        html += `</div>\n\n`;
+        profileCounter++;
+      });
+    }
+    
+    // תוספות (אביזרים)
+    const accessories = order.profiles ? order.profiles.filter(p => 
+      p.name && (p.name.includes('תוספת תליה') || p.name.includes('תוספת דימור'))
+    ) : [];
+    
+    if (accessories.length > 0) {
+      html += `<div class="accessories-section">\n`;
+      html += `<div class="section-title accessories-title">➕ תוספות בהזמנה</div>\n`;
+      
+      accessories.forEach(accessory => {
+        let accessoryLine = '';
+        
+        if (accessory.name && accessory.name !== 'UNSURE') {
+          accessoryLine += `<strong>שם מוצר:</strong> ${accessory.name} `;
+        }
+        
+        if (accessory.catalog_number && accessory.catalog_number !== 'UNSURE') {
+          accessoryLine += `<strong>מקט:</strong> ${accessory.catalog_number} `;
+        }
+        
+        if (accessory.quantity && accessory.quantity !== 'UNSURE') {
+          accessoryLine += `<strong>כמות:</strong> ${accessory.quantity} `;
+        }
+        
+        if (accessory.price && accessory.price !== 'UNSURE' && accessory.price !== '0.00') {
+          accessoryLine += `<strong>מחיר:</strong> <span class="currency">${accessory.price}₪</span>`;
+        }
+        
+        if (accessoryLine) {
+          html += `<p class="profile-field">${accessoryLine}</p>\n`;
+        }
+      });
+      
+      html += `</div>\n\n`;
+    }
+    
+    // פרופילים לא PCB
+    const nonPcbProfiles = order.profiles ? order.profiles.filter(p => p.skipped_reason === 'not_pcb_profile') : [];
+    if (nonPcbProfiles.length > 0) {
+      html += `<div class="non-pcb-section">\n`;
+      html += `<div class="section-title non-pcb-title">🔧 פרופילים נוספים בהזמנה - ללא PCB</div>\n`;
+      
+      nonPcbProfiles.forEach(profile => {
+        if (profile.name && profile.name !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>שם:</strong> ${profile.name} <strong>הערה:</strong> <span class="highlight-value">לא PCB - יש לבדוק ידנית</span></p>\n`;
+        }
+      });
+      
+      html += `</div>\n\n`;
+    }
+    
+    // הערות של האייג'נט
+    html += `<div class="ai-notes-section">\n`;
+    html += `<div class="section-title ai-notes-title">🧠 הערות נוספות של האייג'נט על ההזמנה</div>\n`;
+    
+    // בנה רשימת הערות חכמות
+    const aiNotes = [];
+    
+    // בדוק גרונג
+    const grooveProfiles = order.profiles ? order.profiles.filter(p => 
+      p.groove_direction && p.groove_direction !== 'UNSURE' && p.groove_direction !== 'לא גרונג'
+    ) : [];
+    
+    if (grooveProfiles.length > 0) {
+      aiNotes.push('לפי הסקיצה זיהיתי שאחד מהפרופילים הוא בתצורת גרונג');
+      aiNotes.push('יש לוודא סקיצה לפני הכנת דף עבודה');
+    }
+    
+    // בדוק פרופילים לא PCB
+    if (nonPcbProfiles.length > 0) {
+      aiNotes.push('ישנם פרופילים לא מסוג PCB בהזמנה - יש לוודא ידנית');
+    }
+    
+    // בדוק שדות חסרים כלליים
+    const allMissingFields = new Set();
+    if (order.profiles) {
+      order.profiles.forEach(profile => {
+        if (profile.missing_fields) {
+          profile.missing_fields.forEach(field => allMissingFields.add(field));
+        }
+      });
+    }
+    
+    if (allMissingFields.size > 0) {
+      aiNotes.push(`זוהו שדות חסרים: ${Array.from(allMissingFields).join(', ')}`);
+    }
+    
+    // בדוק משלוח
+    if (order.delivery && order.delivery.is_required === true) {
+      aiNotes.push('זוהתה דרישת משלוח ללקוח');
+      if (order.delivery.address) {
+        aiNotes.push(`כתובת משלוח: ${order.delivery.address}`);
+      }
+    }
+    
+    // הערות ברירת מחדל
+    if (aiNotes.length === 0) {
+      aiNotes.push('כל המידע חולץ אוטומטית מהמסמכים המצורפים');
+      aiNotes.push('נא לאמת נכונות הפרטים לפני ביצוע ההזמנה');
+    }
+    
+    // הדפס הערות
+    aiNotes.forEach(note => {
+      html += `<div class="ai-note">${note}</div>\n`;
+    });
+    
+    html += `</div>\n\n`;
+    
+  });
+
+  return html;
+}
+
 // פונקציה עם CSS פשוט
 function generateFullOrderHTML(orderData) {
   const css = `
