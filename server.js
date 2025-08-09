@@ -1568,7 +1568,7 @@ Attached files analysis:`
     }
 
     // Return the analysis result with conditional HTML
-    const response = {
+    const responseData = {
       success: true,
       data: orderData,
       metadata: {
@@ -1585,13 +1585,13 @@ Attached files analysis:`
 
     // הוסף HTML רק אם יש פרמטרי לקוח
     if (htmlOutput) {
-      response.html_output = htmlOutput;
+      responseData.html_output = htmlOutput;
     }
 
     // אם אין פרמטרי לקוח, הוסף שדות מפורקים
     if (!nameRivhitNO && !(client_name && rivhitNO) && orderData.orders && orderData.orders.length > 0) {
       const order = orderData.orders[0]; // השתמש בהזמנה הראשונה
-      response.extracted_fields = {
+      responseData.extracted_fields = {
         order_number: order.order_number || null,
         order_date: order.order_date || null,
         client_name: order.client_name || null,
@@ -1599,7 +1599,7 @@ Attached files analysis:`
       };
     }
 
-    res.json(response);
+    res.json(responseData);
 
   } catch (error) {
     console.error('Error processing order:', error);
