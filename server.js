@@ -1,11 +1,52 @@
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
+const { Pool } = require('pg');
 const app = express();
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
+
+// Initialize PostgreSQL connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Initialize database tables
+async function initializeDatabase() {
+  try {
+    // טבלת הזמנות מעובדות
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS processed_orders (
+        id SERIAL PRIMARY KEY,
+        order_number VARCHAR(255) UNIQUE NOT NULL,
+        processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        client_name VARCHAR(255),
+        order_date VARCHAR(100)
+      )
+    `);
+
+    // טבלת לקוחות עם מספרי רווחית
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS clients_rivhit (
+        id SERIAL PRIMARY KEY,
+        client_name VARCHAR(255) NOT NULL,
+        rivhit_number VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(client_name, rivhit_number)
+      )
+    `);
+
+    console.log('Database tables initialized successfully');
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
+}
+
+// Initialize database on startup
+initializeDatabase();
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -620,7 +661,83 @@ const PCB_PROFILES_TABLE = `### טבלת פרופילים מסוג PCB
 | סקיני 60 מרחף 1.5מ  | 60W   |
 | סקיני 60 מרחף 2.25מ | 60W   |`;
 
-const GROOVE_GUIDE = `### Groove Profile Identification Guide
+// פונקציה לחיפוש לקוח דומה ברשימה
+async function findSimilarClient(extractedClientName) {
+  if (!extractedClientName || extractedClientName === 'UNSURE') {
+    return null;
+  }
+
+  try {
+    // חיפוש מדויק
+    let result = await pool.query(
+      'SELECT client_name, rivhit_number FROM clients_rivhit WHERE LOWER(client_name) = LOWER($1)',
+      [extractedClientName]
+    );
+
+    if (result.rows.length > 0) {
+      return result.rows[0];
+    }
+
+    // חיפוש דומה (partial match)
+    result = await pool.query(
+      'SELECT client_name, rivhit_number FROM clients_rivhit WHERE LOWER(client_name) LIKE LOWER($1)',
+      [`%${extractedClientName}%`]
+    );
+
+    if (result.rows.length > 0) {
+      return result.rows[0];
+    }
+
+    // חיפוש הפוך - האם שם מהמסמך מכיל חלק משם הלקוח ברשימה
+    result = await pool.query(
+      'SELECT client_name, rivhit_number FROM clients_rivhit WHERE LOWER($1) LIKE LOWER(\'%\' || client_name || \'%\')',
+      [extractedClientName]
+    );
+
+    if (result.rows.length > 0) {
+      return result.rows[0];
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error searching for client:', error);
+    return null;
+  }
+}
+
+// פונקציה לבדיקת הזמנה כפולה
+async function checkDuplicateOrder(orderNumber) {
+  if (!orderNumber || orderNumber === 'UNSURE') {
+    return false;
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT id FROM processed_orders WHERE order_number = $1',
+      [orderNumber]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error checking duplicate order:', error);
+    return false;
+  }
+}
+
+// פונקציה לשמירת הזמנה מעובדת
+async function saveProcessedOrder(orderNumber, clientName, orderDate) {
+  if (!orderNumber || orderNumber === 'UNSURE') {
+    return;
+  }
+
+  try {
+    await pool.query(
+      'INSERT INTO processed_orders (order_number, client_name, order_date) VALUES ($1, $2, $3) ON CONFLICT (order_number) DO NOTHING',
+      [orderNumber, clientName, orderDate]
+    );
+  } catch (error) {
+    console.error('Error saving processed order:', error);
+  }
+}
 
 **What are Groove Profiles:**
 Groove profiles are L-shaped profiles that create a 90-degree angle between two segments, forming one continuous lighting fixture. **Important: A groove is always ONE profile, even if it appears as multiple lines in the order.**
@@ -723,7 +840,7 @@ Since groove profiles consist of two segments, the power connection position mus
 - Corner connections take priority over segment-specific positioning`;
 
 // פונקציה ליצירת HTML מהנתונים שחולצו - לפי הדוגמה המדויקת
-function generateOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
+function generateOrderHTML(orderData, clientName = null, rivhitNumber = null) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
     return '<p>לא נמצאו הזמנות</p>';
   }
@@ -739,35 +856,10 @@ function generateOrderHTML(orderData, nameRivhitNO = null, client_name = null, r
       html += `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
-    // שם לקוח עם כרטיס רווחית - 3 מצבים אפשריים
-    let clientDisplayName = null;
-    let rivhitDisplayNumber = '_______';
-    
-    if (nameRivhitNO) {
-      // מצב 1: name&rivhitNO - נפרק את זה לשם ומספר
-      const parts = nameRivhitNO.trim().split(/\s+/);
-      if (parts.length > 1) {
-        const lastPart = parts[parts.length - 1];
-        if (/^\d+$/.test(lastPart)) {
-          rivhitDisplayNumber = lastPart;
-          clientDisplayName = parts.slice(0, -1).join(' ');
-        } else {
-          clientDisplayName = nameRivhitNO;
-        }
-      } else {
-        clientDisplayName = nameRivhitNO;
-      }
-    } else if (client_name && rivhitNO) {
-      // מצב 2: client_name ו-rivhitNO נפרדים
-      clientDisplayName = client_name;
-      rivhitDisplayNumber = rivhitNO;
-    } else if (order.client_name && order.client_name !== 'UNSURE') {
-      // מצב 3: שם מהמסמך
-      clientDisplayName = order.client_name;
-    }
-    
-    if (clientDisplayName) {
-      html += `<p><strong>שם לקוח:</strong> ${clientDisplayName} - ${rivhitDisplayNumber} (מס כרטיס רווחית)</p>\n`;
+    // שם לקוח עם כרטיס רווחית - מהפרמטרים שהתקבלו
+    if (clientName) {
+      const displayRivhit = rivhitNumber || '_______';
+      html += `<p><strong>שם לקוח:</strong> ${clientName} - ${displayRivhit} (מס כרטיס רווחית)</p>\n`;
     }
     
     if (order.order_number && order.order_number !== 'UNSURE') {
@@ -974,7 +1066,7 @@ function generateOrderHTML(orderData, nameRivhitNO = null, client_name = null, r
 }
 
 // פונקציה מעודכנת ליצירת HTML מעוצב
-function generateStyledOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
+function generateStyledOrderHTML(orderData, clientName = null, rivhitNumber = null) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
     return '<p>לא נמצאו הזמנות</p>';
   }
@@ -992,35 +1084,10 @@ function generateStyledOrderHTML(orderData, nameRivhitNO = null, client_name = n
       html += `<p class="profile-field"><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
-    // שם לקוח עם כרטיס רווחית - 3 מצבים אפשריים
-    let clientDisplayName = null;
-    let rivhitDisplayNumber = '_______';
-    
-    if (nameRivhitNO) {
-      // מצב 1: name&rivhitNO - נפרק את זה לשם ומספר
-      const parts = nameRivhitNO.trim().split(/\s+/);
-      if (parts.length > 1) {
-        const lastPart = parts[parts.length - 1];
-        if (/^\d+$/.test(lastPart)) {
-          rivhitDisplayNumber = lastPart;
-          clientDisplayName = parts.slice(0, -1).join(' ');
-        } else {
-          clientDisplayName = nameRivhitNO;
-        }
-      } else {
-        clientDisplayName = nameRivhitNO;
-      }
-    } else if (client_name && rivhitNO) {
-      // מצב 2: client_name ו-rivhitNO נפרדים
-      clientDisplayName = client_name;
-      rivhitDisplayNumber = rivhitNO;
-    } else if (order.client_name && order.client_name !== 'UNSURE') {
-      // מצב 3: שם מהמסמך
-      clientDisplayName = order.client_name;
-    }
-    
-    if (clientDisplayName) {
-      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${clientDisplayName} - <span class="highlight-value">${rivhitDisplayNumber}</span> (מס כרטיס רווחית)</p>\n`;
+    // שם לקוח עם כרטיס רווחית - מהפרמטרים שהתקבלו
+    if (clientName) {
+      const displayRivhit = rivhitNumber || '_______';
+      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${clientName} - <span class="highlight-value">${displayRivhit}</span> (מס כרטיס רווחית)</p>\n`;
     }
     
     if (order.order_number && order.order_number !== 'UNSURE') {
@@ -1233,7 +1300,7 @@ function generateStyledOrderHTML(orderData, nameRivhitNO = null, client_name = n
 }
 
 // פונקציה עם CSS מעוצב כמו בתמונה - מעודכן עם RTL
-function generateFullOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
+function generateFullOrderHTML(orderData, clientName = null, rivhitNumber = null) {
   const css = `
 <style>
   body { 
@@ -1395,7 +1462,7 @@ function generateFullOrderHTML(orderData, nameRivhitNO = null, client_name = nul
 </style>
 `;
   
-  return css + '<div class="container">' + generateStyledOrderHTML(orderData, nameRivhitNO, client_name, rivhitNO) + '</div>';
+  return css + '<div class="container">' + generateStyledOrderHTML(orderData, clientName, rivhitNumber) + '</div>';
 }
 
 // Helper function to determine file type
