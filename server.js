@@ -186,7 +186,7 @@ When certain accessories are mentioned in the order text, automatically add them
 **Hanging Kit (סט תליה):**
 When any of these terms appear: "סט תליה", "כבל תליה", "תוספת תליה", "אביזרי תלייה"
 Add this object:
-\`\`\`json
+\\\`\\\`\\\`json
 {
   "name": "תוספת תליה לפרופיל",
   "catalog_number": "6972",
@@ -196,12 +196,12 @@ Add this object:
   "notes": null,
   "missing_fields": []
 }
-\`\`\`
+\\\`\\\`\\\`
 
 **Dimming Addition (תוספת דימור):**
 When dimming is mentioned: "דימר", "תוספת דימור", "דמר"
 Add this object:
-\`\`\`json
+\\\`\\\`\\\`json
 {
   "name": "תוספת דימור",
   "catalog_number": "9387",
@@ -211,7 +211,7 @@ Add this object:
   "notes": null,
   "missing_fields": []
 }
-\`\`\`
+\\\`\\\`\\\`
 
 ⸻
 
@@ -853,7 +853,666 @@ function generateOrderHTML(orderData, clientName = null, rivhitNumber = null) {
     
     // פרטי הזמנה עיקריים
     if (order.order_date && order.order_date !== 'UNSURE') {
-      html += `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
+      html += `<p class="profile-field"><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
+    }
+    
+    // שם לקוח עם כרטיס רווחית - מהפרמטרים שהתקבלו
+    if (clientName) {
+      const displayRivhit = rivhitNumber || '_______';
+      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${clientName} - <span class="highlight-value">${displayRivhit}</span> (מס כרטיס רווחית)</p>\n`;
+    }
+    
+    if (order.order_number && order.order_number !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>מס׳ הזמנה (רכש):</strong> ${order.order_number}</p>\n`;
+    }
+    
+    if (order.branch && order.branch !== 'UNSURE') {
+      html += `<p class="profile-field"><strong>סניף:</strong> ${order.branch}</p>\n`;
+    }
+    
+    html += `</div>\n\n`;
+
+    // פרופילים
+    if (order.profiles && order.profiles.length > 0) {
+      let profileCounter = 1;
+      
+      order.profiles.forEach(profile => {
+        // דלג על פרופילים שנדלגו או אביזרים
+        if (profile.skipped_reason || 
+            (profile.name && (profile.name.includes('תוספת תליה') || profile.name.includes('תוספת דימור')))) {
+          return;
+        }
+        
+        html += `<div class="profile-section">\n`;
+        html += `<div class="profile-title">🔄 פרופיל ${profileCounter}:</div>\n`;
+        
+        // שם פרופיל
+        if (profile.name && profile.name !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>שם פרופיל:</strong> ${profile.name}</p>\n`;
+        }
+        
+        // מק"ט
+        if (profile.catalog_number && profile.catalog_number !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>מקט:</strong> ${profile.catalog_number}</p>\n`;
+        }
+        
+        // גוון לד
+        if (profile.led_color && profile.led_color !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>גוון לד:</strong> ${profile.led_color}</p>\n`;
+        }
+        
+        // סוג לד
+        if (profile.led_type && profile.led_type !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>סוג לד:</strong> ${profile.led_type}</p>\n`;
+        }
+        
+        // אורך
+        if (profile.length && profile.length !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>אורך:</strong> ${profile.length}</p>\n`;
+        }
+        
+        // כמות
+        if (profile.quantity && profile.quantity !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>כמות:</strong> ${profile.quantity}</p>\n`;
+        }
+        
+        // מחיר
+        if (profile.price && profile.price !== 'UNSURE' && profile.price !== '0.00') {
+          html += `<p class="profile-field"><strong>מחיר:</strong> <span class="currency">${profile.price}₪</span></p>\n`;
+        }
+        
+        // צבע פרופיל
+        if (profile.color && profile.color !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>צבע פרופיל:</strong> ${profile.color}</p>\n`;
+        }
+        
+        // גרונג
+        if (profile.groove_direction && profile.groove_direction !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>גרונג:</strong> <span class="highlight-value">${profile.groove_direction}</span></p>\n`;
+        } else {
+          html += `<p class="profile-field"><strong>גרונג:</strong> לא גרונג</p>\n`;
+        }
+        
+        // תלייה
+        if (profile.hung && profile.hung !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>תלייה:</strong> ${profile.hung}</p>\n`;
+        }
+        
+        // נקודת הזנה
+        if (profile.power_connection_position && profile.power_connection_position !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>נקודת הזנה:</strong> ${profile.power_connection_position}</p>\n`;
+        }
+        
+        // הערות נוספות
+        if (profile.notes && profile.notes !== null) {
+          html += `<p class="profile-field"><strong>הערות נוספות ע״ג ההזמנה:</strong> ${profile.notes}</p>\n`;
+        }
+        
+        // שדות חסרים
+        if (profile.missing_fields && profile.missing_fields.length > 0) {
+          html += `<p class="profile-field missing-fields"><strong>שדות חסרים:</strong> ${profile.missing_fields.join(', ')}</p>\n`;
+        }
+        
+        html += `</div>\n\n`;
+        profileCounter++;
+      });
+    }
+    
+    // תוספות (אביזרים)
+    const accessories = order.profiles ? order.profiles.filter(p => 
+      p.name && (p.name.includes('תוספת תליה') || p.name.includes('תוספת דימור'))
+    ) : [];
+    
+    if (accessories.length > 0) {
+      html += `<div class="accessories-section">\n`;
+      html += `<div class="section-title accessories-title">➕ תוספות בהזמנה</div>\n`;
+      
+      accessories.forEach(accessory => {
+        let accessoryLine = '';
+        
+        if (accessory.name && accessory.name !== 'UNSURE') {
+          accessoryLine += `<strong>שם מוצר:</strong> ${accessory.name} `;
+        }
+        
+        if (accessory.catalog_number && accessory.catalog_number !== 'UNSURE') {
+          accessoryLine += `<strong>מקט:</strong> ${accessory.catalog_number} `;
+        }
+        
+        if (accessory.quantity && accessory.quantity !== 'UNSURE') {
+          accessoryLine += `<strong>כמות:</strong> ${accessory.quantity} `;
+        }
+        
+        if (accessory.price && accessory.price !== 'UNSURE' && accessory.price !== '0.00') {
+          accessoryLine += `<strong>מחיר:</strong> <span class="currency">${accessory.price}₪</span>`;
+        }
+        
+        if (accessoryLine) {
+          html += `<p class="profile-field">${accessoryLine}</p>\n`;
+        }
+      });
+      
+      html += `</div>\n\n`;
+    }
+    
+    // פרופילים לא PCB
+    const nonPcbProfiles = order.profiles ? order.profiles.filter(p => p.skipped_reason === 'not_pcb_profile') : [];
+    if (nonPcbProfiles.length > 0) {
+      html += `<div class="non-pcb-section">\n`;
+      html += `<div class="section-title non-pcb-title">🔧 פרופילים נוספים בהזמנה - ללא PCB</div>\n`;
+      
+      nonPcbProfiles.forEach(profile => {
+        if (profile.name && profile.name !== 'UNSURE') {
+          html += `<p class="profile-field"><strong>שם:</strong> ${profile.name} <strong>הערה:</strong> <span class="highlight-value">לא PCB - יש לבדוק ידנית</span></p>\n`;
+        }
+      });
+      
+      html += `</div>\n\n`;
+    }
+    
+    // הערות של האייג'נט
+    html += `<div class="ai-notes-section">\n`;
+    html += `<div class="section-title ai-notes-title">🧠 הערות נוספות של האייג'נט על ההזמנה</div>\n`;
+    
+    // בנה רשימת הערות חכמות
+    const aiNotes = [];
+    
+    // בדוק גרונג
+    const grooveProfiles = order.profiles ? order.profiles.filter(p => 
+      p.groove_direction && p.groove_direction !== 'UNSURE' && p.groove_direction !== 'לא גרונג'
+    ) : [];
+    
+    if (grooveProfiles.length > 0) {
+      aiNotes.push('לפי הסקיצה זיהיתי שאחד מהפרופילים הוא בתצורת גרונג');
+      aiNotes.push('יש לוודא סקיצה לפני הכנת דף עבודה');
+    }
+    
+    // בדוק פרופילים לא PCB
+    if (nonPcbProfiles.length > 0) {
+      aiNotes.push('ישנם פרופילים לא מסוג PCB בהזמנה - יש לוודא ידנית');
+    }
+    
+    // בדוק שדות חסרים כלליים
+    const allMissingFields = new Set();
+    if (order.profiles) {
+      order.profiles.forEach(profile => {
+        if (profile.missing_fields) {
+          profile.missing_fields.forEach(field => allMissingFields.add(field));
+        }
+      });
+    }
+    
+    if (allMissingFields.size > 0) {
+      aiNotes.push(`זוהו שדות חסרים: ${Array.from(allMissingFields).join(', ')}`);
+    }
+    
+    // בדוק משלוח
+    if (order.delivery && order.delivery.is_required === true) {
+      aiNotes.push('זוהתה דרישת משלוח ללקוח');
+      if (order.delivery.address) {
+        aiNotes.push(`כתובת משלוח: ${order.delivery.address}`);
+      }
+    }
+    
+    // הערות ברירת מחדל
+    if (aiNotes.length === 0) {
+      aiNotes.push('כל המידע חולץ אוטומטית מהמסמכים המצורפים');
+      aiNotes.push('נא לאמת נכונות הפרטים לפני ביצוע ההזמנה');
+    }
+    
+    // הדפס הערות
+    aiNotes.forEach(note => {
+      html += `<div class="ai-note">${note}</div>\n`;
+    });
+    
+    html += `</div>\n\n`;
+    
+  });
+
+  return html;
+}
+
+// פונקציה עם CSS מעוצב כמו בתמונה - מעודכן עם RTL
+function generateFullOrderHTML(orderData, clientName = null, rivhitNumber = null) {
+  const css = `
+<style>
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+    line-height: 1.5; 
+    margin: 20px auto; 
+    max-width: 800px; 
+    background-color: #f8f9fa;
+    color: #333;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .container {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    margin: 20px 0;
+  }
+  
+  h2 { 
+    color: #2c3e50; 
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .order-info {
+    background: #f8f9ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-right: 4px solid #3498db;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-section {
+    background: #f0fff4;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #27ae60;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .profile-title {
+    color: #27ae60;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-section {
+    background: #fff8f0;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #f39c12;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .non-pcb-section {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #95a5a6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-notes-section {
+    background: #f0f8ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    color: #2c3e50;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .accessories-title { color: #f39c12; }
+  .non-pcb-title { color: #95a5a6; }
+  .ai-notes-title { color: #3498db; }
+  
+  p { 
+    margin: 8px 0; 
+    font-size: 14px;
+  }
+  
+  strong { 
+    color: #2c3e50; 
+    font-weight: 600;
+  }
+  
+  .profile-field {
+    margin: 6px 0;
+    padding: 4px 0;
+  }
+  
+  .highlight-value {
+    color: #e74c3c;
+    font-weight: bold;
+  }
+  
+  .currency {
+    color: #27ae60;
+    font-weight: bold;
+  }
+  
+  .missing-fields {
+    color: #e74c3c;
+    font-style: italic;
+  }
+  
+  .ai-note {
+    margin: 8px 0;
+    padding-right: 15px;
+    position: relative;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ai-note::before {
+    content: "•";
+    color: #3498db;
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+  }
+</style>
+`;
+  
+  return css + '<div class="container">' + generateStyledOrderHTML(orderData, clientName, rivhitNumber) + '</div>';
+}
+
+// Helper function to determine file type
+function getFileType(filename) {
+  if (!filename) return 'unknown';
+  const ext = filename.toLowerCase().split('.').pop();
+  const fileTypes = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  };
+  return fileTypes[ext] || 'application/octet-stream';
+}
+
+// Main API endpoint - flexible file handling
+app.post('/api/analyze-order', async (req, res) => {
+  try {
+    const { attachments, email_subject, email_body, sender_email, "name&rivhitNO": nameRivhitNO, client_name, rivhitNO } = req.body;
+
+    // Log incoming request
+    console.log('Received order analysis request:', {
+      attachments_count: attachments ? attachments.length : 0,
+      email_subject: email_subject,
+      sender: sender_email
+    });
+
+    // Prepare messages for Claude
+    const messages = [
+      {
+        role: 'assistant',
+        content: SYSTEM_PROMPT
+      },
+      {
+        role: 'assistant',
+        content: CATALOG_NUMBERS
+      },
+      {
+        role: 'assistant',
+        content: PCB_PROFILES_TABLE
+      },
+      {
+        role: 'assistant',
+        content: GROOVE_GUIDE
+      }
+    ];
+
+    // Prepare user message
+    const userContent = [
+      {
+        type: 'text',
+        text: `The following text was extracted from a supplier's email order.
+Please:
+1. Extract all relevant information from the attached files and email content.
+2. Return a structured JSON object with English field names and original Hebrew values.
+3. Analyze ALL attached files - PDFs, images, and any other documents.
+4. If multiple orders are found across different files, include them all.
+
+Email Subject: ${email_subject || 'No subject'}
+Email Body: ${email_body || 'No body'}
+Sender: ${sender_email || 'Unknown sender'}
+
+Attached files analysis:`
+      }
+    ];
+
+    // Process all attachments
+    let pdfCount = 0;
+    let imageCount = 0;
+    let otherCount = 0;
+
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        const { data, filename } = attachment;
+        
+        if (!data || !filename) {
+          console.warn('Skipping attachment with missing data or filename');
+          continue;
+        }
+
+        const fileType = getFileType(filename);
+        const base64Data = typeof data === 'string' ? data : data.toString('base64');
+
+        // Handle different file types
+        if (fileType === 'application/pdf') {
+          pdfCount++;
+          userContent.push({
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: base64Data
+            }
+          });
+          console.log('Added PDF: ' + filename);
+        } 
+        else if (fileType.startsWith('image/')) {
+          imageCount++;
+          userContent.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: fileType,
+              data: base64Data
+            }
+          });
+          console.log('Added image: ' + filename);
+        }
+        else {
+          // For other file types, add as text description
+          otherCount++;
+          userContent[0].text += `\n\nNote: File "${filename}" (${fileType}) was attached but cannot be directly processed. Please consider any references to this file in the email body.`;
+          console.log('Noted other file type: ' + filename + ' (' + fileType + ')');
+        }
+      }
+
+      // Add summary to prompt
+      userContent[0].text += `\n\nTotal attachments processed: ${pdfCount} PDFs, ${imageCount} images, ${otherCount} other files.`;
+    } else {
+      // No attachments - try to extract from email body only
+      userContent[0].text += `\n\nNo attachments found. Please extract any order information from the email body text above.`;
+    }
+
+    // Add user message to messages array
+    messages.push({
+      role: 'user',
+      content: userContent
+    });
+
+    // Call Claude API
+    console.log('Calling Claude API...');
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 8192,
+      temperature: 1,
+      messages: messages
+    });
+
+    // Extract JSON from Claude's response
+    const responseText = response.content[0].text;
+    let orderData;
+    
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        orderData = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Claude response:', parseError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to parse AI response',
+        raw_response: responseText
+      });
+    }
+
+    // Generate HTML output - רק אם יש פרמטרי לקוח
+    let htmlOutput = null;
+    if (nameRivhitNO || (client_name && rivhitNO)) {
+      htmlOutput = generateFullOrderHTML(orderData, nameRivhitNO, client_name, rivhitNO);
+    }
+
+    // Return the analysis result with conditional HTML
+    const responseData = {
+      success: true,
+      data: orderData,
+      metadata: {
+        processed_at: new Date().toISOString(),
+        model_used: 'claude-3-5-sonnet-20241022',
+        attachments_processed: {
+          total: attachments ? attachments.length : 0,
+          pdfs: pdfCount,
+          images: imageCount,
+          others: otherCount
+        }
+      }
+    };
+
+    // הוסף HTML רק אם יש פרמטרי לקוח
+    if (htmlOutput) {
+      responseData.html_output = htmlOutput;
+    }
+
+    // אם אין פרמטרי לקוח, הוסף שדות מפורקים
+    if (!nameRivhitNO && !(client_name && rivhitNO) && orderData.orders && orderData.orders.length > 0) {
+      const order = orderData.orders[0]; // השתמש בהזמנה הראשונה
+      responseData.extracted_fields = {
+        order_number: order.order_number || null,
+        order_date: order.order_date || null,
+        client_name: order.client_name || null,
+        branch: order.branch || null
+      };
+    }
+
+    res.json(responseData);
+
+  } catch (error) {
+    console.error('Error processing order:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Alternative endpoint for backward compatibility
+app.post('/api/analyze-order-legacy', async (req, res) => {
+  // Convert old format to new format
+  const { pdf_data, pdf_name, img_data, img_name, email_subject, email_body, sender_email } = req.body;
+  
+  const attachments = [];
+  if (pdf_data && pdf_name) {
+    attachments.push({ data: pdf_data, filename: pdf_name });
+  }
+  if (img_data && img_name) {
+    attachments.push({ data: img_data, filename: img_name });
+  }
+
+  // Forward to main endpoint
+  req.body = { attachments, email_subject, email_body, sender_email };
+  return app._router.handle(req, res);
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    service: 'nisko-order-analyzer',
+    version: '2.0',
+    features: ['multi-file', 'flexible-input', 'pdf', 'images']
+  });
+});
+
+// Test endpoint
+app.post('/api/test', (req, res) => {
+  const { attachments } = req.body;
+  res.json({
+    received: true,
+    attachments_count: attachments ? attachments.length : 0,
+    attachments_info: attachments ? attachments.map(a => ({
+      filename: a.filename,
+      has_data: !!a.data,
+      data_length: a.data ? a.data.length : 0
+    })) : []
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    service: 'Nisko Order Analysis API',
+    version: '2.0',
+    endpoints: {
+      health: 'GET /health',
+      analyze: 'POST /api/analyze-order',
+      test: 'POST /api/test'
+    }
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log('Nisko Order Analysis Server v2.0 running on port ' + PORT);
+  console.log('Features: Multi-file support, flexible attachment handling');
+});
+
+module.exports = app; `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
     // שם לקוח עם כרטיס רווחית - מהפרמטרים שהתקבלו
@@ -1081,86 +1740,4 @@ function generateStyledOrderHTML(orderData, clientName = null, rivhitNumber = nu
     html += `<div class="order-info">\n`;
     
     if (order.order_date && order.order_date !== 'UNSURE') {
-      html += `<p class="profile-field"><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
-    }
-    
-    // שם לקוח עם כרטיס רווחית - מהפרמטרים שהתקבלו
-    if (clientName) {
-      const displayRivhit = rivhitNumber || '_______';
-      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${clientName} - <span class="highlight-value">${displayRivhit}</span> (מס כרטיס רווחית)</p>\n`;
-    }
-    
-    if (order.order_number && order.order_number !== 'UNSURE') {
-      html += `<p class="profile-field"><strong>מס׳ הזמנה (רכש):</strong> ${order.order_number}</p>\n`;
-    }
-    
-    if (order.branch && order.branch !== 'UNSURE') {
-      html += `<p class="profile-field"><strong>סניף:</strong> ${order.branch}</p>\n`;
-    }
-    
-    html += `</div>\n\n`;
-
-    // פרופילים
-    if (order.profiles && order.profiles.length > 0) {
-      let profileCounter = 1;
-      
-      order.profiles.forEach(profile => {
-        // דלג על פרופילים שנדלגו או אביזרים
-        if (profile.skipped_reason || 
-            (profile.name && (profile.name.includes('תוספת תליה') || profile.name.includes('תוספת דימור')))) {
-          return;
-        }
-        
-        html += `<div class="profile-section">\n`;
-        html += `<div class="profile-title">🔄 פרופיל ${profileCounter}:</div>\n`;
-        
-        // שם פרופיל
-        if (profile.name && profile.name !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>שם פרופיל:</strong> ${profile.name}</p>\n`;
-        }
-        
-        // מק"ט
-        if (profile.catalog_number && profile.catalog_number !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>מקט:</strong> ${profile.catalog_number}</p>\n`;
-        }
-        
-        // גוון לד
-        if (profile.led_color && profile.led_color !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>גוון לד:</strong> ${profile.led_color}</p>\n`;
-        }
-        
-        // סוג לד
-        if (profile.led_type && profile.led_type !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>סוג לד:</strong> ${profile.led_type}</p>\n`;
-        }
-        
-        // אורך
-        if (profile.length && profile.length !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>אורך:</strong> ${profile.length}</p>\n`;
-        }
-        
-        // כמות
-        if (profile.quantity && profile.quantity !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>כמות:</strong> ${profile.quantity}</p>\n`;
-        }
-        
-        // מחיר
-        if (profile.price && profile.price !== 'UNSURE' && profile.price !== '0.00') {
-          html += `<p class="profile-field"><strong>מחיר:</strong> <span class="currency">${profile.price}₪</span></p>\n`;
-        }
-        
-        // צבע פרופיל
-        if (profile.color && profile.color !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>צבע פרופיל:</strong> ${profile.color}</p>\n`;
-        }
-        
-        // גרונג
-        if (profile.groove_direction && profile.groove_direction !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>גרונג:</strong> <span class="highlight-value">${profile.groove_direction}</span></p>\n`;
-        } else {
-          html += `<p class="profile-field"><strong>גרונג:</strong> לא גרונג</p>\n`;
-        }
-        
-        // תלייה
-        if (profile.hung && profile.hung !== 'UNSURE') {
-          html += `<p class="profile-field"><strong>תלייה:</strong> ${profile.hung}</p>\n
+      html +=
