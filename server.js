@@ -723,7 +723,7 @@ Since groove profiles consist of two segments, the power connection position mus
 - Corner connections take priority over segment-specific positioning`;
 
 // פונקציה ליצירת HTML מהנתונים שחולצו - לפי הדוגמה המדויקת
-function generateOrderHTML(orderData) {
+function generateOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
     return '<p>לא נמצאו הזמנות</p>';
   }
@@ -739,9 +739,35 @@ function generateOrderHTML(orderData) {
       html += `<p><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
-    // שם לקוח עם כרטיס רווחית ריק
-    if (order.client_name && order.client_name !== 'UNSURE') {
-      html += `<p><strong>שם לקוח:</strong> ${order.client_name} - _______ (מס כרטיס רווחית)</p>\n`;
+    // שם לקוח עם כרטיס רווחית - 3 מצבים אפשריים
+    let clientDisplayName = null;
+    let rivhitDisplayNumber = '_______';
+    
+    if (nameRivhitNO) {
+      // מצב 1: name&rivhitNO - נפרק את זה לשם ומספר
+      const parts = nameRivhitNO.trim().split(/\s+/);
+      if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+          rivhitDisplayNumber = lastPart;
+          clientDisplayName = parts.slice(0, -1).join(' ');
+        } else {
+          clientDisplayName = nameRivhitNO;
+        }
+      } else {
+        clientDisplayName = nameRivhitNO;
+      }
+    } else if (client_name && rivhitNO) {
+      // מצב 2: client_name ו-rivhitNO נפרדים
+      clientDisplayName = client_name;
+      rivhitDisplayNumber = rivhitNO;
+    } else if (order.client_name && order.client_name !== 'UNSURE') {
+      // מצב 3: שם מהמסמך
+      clientDisplayName = order.client_name;
+    }
+    
+    if (clientDisplayName) {
+      html += `<p><strong>שם לקוח:</strong> ${clientDisplayName} - ${rivhitDisplayNumber} (מס כרטיס רווחית)</p>\n`;
     }
     
     if (order.order_number && order.order_number !== 'UNSURE') {
@@ -948,7 +974,7 @@ function generateOrderHTML(orderData) {
 }
 
 // פונקציה מעודכנת ליצירת HTML מעוצב
-function generateStyledOrderHTML(orderData) {
+function generateStyledOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
   if (!orderData || !orderData.orders || orderData.orders.length === 0) {
     return '<p>לא נמצאו הזמנות</p>';
   }
@@ -966,9 +992,35 @@ function generateStyledOrderHTML(orderData) {
       html += `<p class="profile-field"><strong>תאריך הזמנה:</strong> ${order.order_date}</p>\n`;
     }
     
-    // שם לקוח עם כרטיס רווחית ריק
-    if (order.client_name && order.client_name !== 'UNSURE') {
-      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${order.client_name} - <span class="highlight-value">_______</span> (מס כרטיס רווחית)</p>\n`;
+    // שם לקוח עם כרטיס רווחית - 3 מצבים אפשריים
+    let clientDisplayName = null;
+    let rivhitDisplayNumber = '_______';
+    
+    if (nameRivhitNO) {
+      // מצב 1: name&rivhitNO - נפרק את זה לשם ומספר
+      const parts = nameRivhitNO.trim().split(/\s+/);
+      if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+          rivhitDisplayNumber = lastPart;
+          clientDisplayName = parts.slice(0, -1).join(' ');
+        } else {
+          clientDisplayName = nameRivhitNO;
+        }
+      } else {
+        clientDisplayName = nameRivhitNO;
+      }
+    } else if (client_name && rivhitNO) {
+      // מצב 2: client_name ו-rivhitNO נפרדים
+      clientDisplayName = client_name;
+      rivhitDisplayNumber = rivhitNO;
+    } else if (order.client_name && order.client_name !== 'UNSURE') {
+      // מצב 3: שם מהמסמך
+      clientDisplayName = order.client_name;
+    }
+    
+    if (clientDisplayName) {
+      html += `<p class="profile-field"><strong>שם לקוח:</strong> ${clientDisplayName} - <span class="highlight-value">${rivhitDisplayNumber}</span> (מס כרטיס רווחית)</p>\n`;
     }
     
     if (order.order_number && order.order_number !== 'UNSURE') {
@@ -1181,7 +1233,7 @@ function generateStyledOrderHTML(orderData) {
 }
 
 // פונקציה עם CSS מעוצב כמו בתמונה - מעודכן עם RTL
-function generateFullOrderHTML(orderData) {
+function generateFullOrderHTML(orderData, nameRivhitNO = null, client_name = null, rivhitNO = null) {
   const css = `
 <style>
   body { 
@@ -1343,7 +1395,7 @@ function generateFullOrderHTML(orderData) {
 </style>
 `;
   
-  return css + '<div class="container">' + generateStyledOrderHTML(orderData) + '</div>';
+  return css + '<div class="container">' + generateStyledOrderHTML(orderData, nameRivhitNO, client_name, rivhitNO) + '</div>';
 }
 
 // Helper function to determine file type
@@ -1368,7 +1420,7 @@ function getFileType(filename) {
 // Main API endpoint - flexible file handling
 app.post('/api/analyze-order', async (req, res) => {
   try {
-    const { attachments, email_subject, email_body, sender_email } = req.body;
+    const { attachments, email_subject, email_body, sender_email, "name&rivhitNO": nameRivhitNO, client_name, rivhitNO } = req.body;
 
     // Log incoming request
     console.log('Received order analysis request:', {
@@ -1509,14 +1561,16 @@ Attached files analysis:`
       });
     }
 
-    // Generate HTML output
-    const htmlOutput = generateFullOrderHTML(orderData);
+    // Generate HTML output - רק אם יש פרמטרי לקוח
+    let htmlOutput = null;
+    if (nameRivhitNO || (client_name && rivhitNO)) {
+      htmlOutput = generateFullOrderHTML(orderData, nameRivhitNO, client_name, rivhitNO);
+    }
 
-    // Return the analysis result with HTML
-    res.json({
+    // Return the analysis result with conditional HTML
+    const response = {
       success: true,
       data: orderData,
-      html_output: htmlOutput,
       metadata: {
         processed_at: new Date().toISOString(),
         model_used: 'claude-3-5-sonnet-20241022',
@@ -1527,7 +1581,25 @@ Attached files analysis:`
           others: otherCount
         }
       }
-    });
+    };
+
+    // הוסף HTML רק אם יש פרמטרי לקוח
+    if (htmlOutput) {
+      response.html_output = htmlOutput;
+    }
+
+    // אם אין פרמטרי לקוח, הוסף שדות מפורקים
+    if (!nameRivhitNO && !(client_name && rivhitNO) && orderData.orders && orderData.orders.length > 0) {
+      const order = orderData.orders[0]; // השתמש בהזמנה הראשונה
+      response.extracted_fields = {
+        order_number: order.order_number || null,
+        order_date: order.order_date || null,
+        client_name: order.client_name || null,
+        branch: order.branch || null
+      };
+    }
+
+    res.json(response);
 
   } catch (error) {
     console.error('Error processing order:', error);
