@@ -1487,13 +1487,17 @@ function getFileType(filename) {
 // Main API endpoint - flexible file handling
 app.post('/api/analyze-order', async (req, res) => {
   try {
-    const { attachments, email_subject, email_body, sender_email, "name&rivhitNO": nameRivhitNO, client_name, rivhitNO } = req.body;
+    const { attachments, email_subject, email_body, mail_body, sender_email, "name&rivhitNO": nameRivhitNO } = req.body;
+
+    // Use mail_body if email_body is not provided
+    const bodyContent = email_body || mail_body || '';
 
     // Log incoming request
     console.log('Received order analysis request:', {
       attachments_count: attachments ? attachments.length : 0,
       email_subject: email_subject,
-      sender: sender_email
+      sender: sender_email,
+      has_nameRivhitNO: !!nameRivhitNO
     });
 
     // Prepare messages for Claude
@@ -1528,7 +1532,7 @@ Please:
 4. If multiple orders are found across different files, include them all.
 
 Email Subject: ${email_subject || 'No subject'}
-Email Body: ${email_body || 'No body'}
+Email Body: ${bodyContent || 'No body'}
 Sender: ${sender_email || 'Unknown sender'}
 
 Attached files analysis:`
@@ -1628,13 +1632,50 @@ Attached files analysis:`
       });
     }
 
-    // Generate HTML output - רק אם יש פרמטרי לקוח
-    let htmlOutput = null;
-    if (nameRivhitNO || (client_name && rivhitNO)) {
-      htmlOutput = generateFullOrderHTML(orderData, client_name || nameRivhitNO, rivhitNO || nameRivhitNO);
+    // Prepare client info for HTML generation
+    let clientName = null;
+    let rivhitNumber = null;
+
+    // Case 1: name&rivhitNO is provided
+    if (nameRivhitNO) {
+      // Parse name&rivhitNO to extract name and number
+      // Look for the last sequence of digits in the string
+      const match = nameRivhitNO.match(/^(.+?)\s*(\d+)$/);
+      if (match) {
+        clientName = match[1].trim();
+        rivhitNumber = match[2];
+      } else {
+        // If no clear pattern, use the whole string as name
+        clientName = nameRivhitNO;
+        rivhitNumber = '_______';
+      }
+      console.log('Parsed nameRivhitNO:', { clientName, rivhitNumber });
+    }
+    // Case 2: No name&rivhitNO - search in database
+    else if (orderData.orders && orderData.orders.length > 0 && orderData.orders[0].client_name) {
+      const extractedClientName = orderData.orders[0].client_name;
+      console.log('Searching for client in database:', extractedClientName);
+      
+      const clientInfo = await findSimilarClient(extractedClientName);
+      if (clientInfo) {
+        clientName = clientInfo.client_name;
+        rivhitNumber = clientInfo.rivhit_number;
+        console.log('Found client in database:', { clientName, rivhitNumber });
+      } else {
+        // If not found in database, use extracted name
+        clientName = extractedClientName;
+        rivhitNumber = '_______';
+        console.log('Client not found in database, using extracted name');
+      }
     }
 
-    // Return the analysis result with conditional HTML
+    // Generate HTML output if we have client info
+    let htmlOutput = null;
+    if (clientName) {
+      htmlOutput = generateFullOrderHTML(orderData, clientName, rivhitNumber);
+    }
+
+    // Return the analysis result
     const responseData = {
       success: true,
       data: orderData,
@@ -1650,14 +1691,14 @@ Attached files analysis:`
       }
     };
 
-    // הוסף HTML רק אם יש פרמטרי לקוח
+    // Add HTML output if available
     if (htmlOutput) {
       responseData.html_output = htmlOutput;
     }
 
-    // אם אין פרמטרי לקוח, הוסף שדות מפורקים
-    if (!nameRivhitNO && !(client_name && rivhitNO) && orderData.orders && orderData.orders.length > 0) {
-      const order = orderData.orders[0]; // השתמש בהזמנה הראשונה
+    // Add extracted fields for reference
+    if (orderData.orders && orderData.orders.length > 0) {
+      const order = orderData.orders[0];
       responseData.extracted_fields = {
         order_number: order.order_number || null,
         order_date: order.order_date || null,
@@ -1728,9 +1769,82 @@ app.get('/', (req, res) => {
     endpoints: {
       health: 'GET /health',
       analyze: 'POST /api/analyze-order',
-      test: 'POST /api/test'
+      test: 'POST /api/test',
+      'add-clients': 'POST /api/add-clients'
     }
   });
+});
+
+// Endpoint to add multiple clients to database
+app.post('/api/add-clients', async (req, res) => {
+  try {
+    const { clients } = req.body;
+    
+    if (!clients || !Array.isArray(clients)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide an array of clients'
+      });
+    }
+
+    let added = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (const client of clients) {
+      try {
+        if (!client.name || !client.rivhit_number) {
+          failed++;
+          errors.push(`Missing data for client: ${JSON.stringify(client)}`);
+          continue;
+        }
+
+        await pool.query(
+          'INSERT INTO clients_rivhit (client_name, rivhit_number) VALUES ($1, $2) ON CONFLICT (client_name, rivhit_number) DO NOTHING',
+          [client.name, client.rivhit_number]
+        );
+        added++;
+      } catch (error) {
+        failed++;
+        errors.push(`Error adding ${client.name}: ${error.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      summary: {
+        total: clients.length,
+        added: added,
+        failed: failed
+      },
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('Error adding clients:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Endpoint to get all clients from database
+app.get('/api/clients', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM clients_rivhit ORDER BY client_name');
+    res.json({
+      success: true,
+      count: result.rows.length,
+      clients: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Start server
